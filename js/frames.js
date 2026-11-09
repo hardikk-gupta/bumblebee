@@ -1,7 +1,7 @@
 // Loads the frame sequence and paints it to a canvas with:
 //  - crossfade between neighbouring frames (smooth when the scroll is slowed)
 //  - zoom blur driven by scroll speed
-//  - a night overlay with a cursor-aimed headlight cut out of it
+//  - a night overlay with a soft, cursor-aimed spotlight cut out of it
 
 const pad = (n) => String(n).padStart(4, '0');
 
@@ -143,29 +143,6 @@ export class FrameSequence {
       m.restore();
     }
 
-    const ctx = this.ctx;
-    ctx.drawImage(this.mask, 0, 0);
-
-    if (light) {
-      // Warm bloom plus an anamorphic lens streak, so it reads as a headlight.
-      const x = light.x * dpr, y = light.y * dpr;
-      const r = Math.min(cw, ch) * 0.18;
-      ctx.globalCompositeOperation = 'lighter';
-      const bloom = ctx.createRadialGradient(x, y, 0, x, y, r);
-      bloom.addColorStop(0, `rgba(255, 244, 214, ${0.55 * night})`);
-      bloom.addColorStop(0.3, `rgba(255, 214, 140, ${0.18 * night})`);
-      bloom.addColorStop(1, 'rgba(255, 200, 120, 0)');
-      ctx.fillStyle = bloom;
-      ctx.fillRect(x - r, y - r, r * 2, r * 2);
-
-      const len = cw * 0.45, th = 3 * dpr;
-      const streak = ctx.createLinearGradient(x - len, 0, x + len, 0);
-      streak.addColorStop(0, 'rgba(120, 200, 255, 0)');
-      streak.addColorStop(0.5, `rgba(170, 225, 255, ${0.6 * night})`);
-      streak.addColorStop(1, 'rgba(120, 200, 255, 0)');
-      ctx.fillStyle = streak;
-      ctx.fillRect(x - len, y - th / 2, len * 2, th);
-      ctx.globalCompositeOperation = 'source-over';
-    }
+    this.ctx.drawImage(this.mask, 0, 0);
   }
 }

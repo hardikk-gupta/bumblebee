@@ -259,3 +259,33 @@ html.is-locked, html.is-locked body { overflow: hidden; }
 .intro__silent:hover:not(:disabled) { color: var(--ink); }
 .intro__silent:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
 .intro__note { margin: 22px 0 0; font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+
+/* ---------- cursor (mouse only) ---------- */
+html.has-cursor, html.has-cursor * { cursor: none !important; }
+.cursor { position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: 0; transition: opacity 0.3s; filter: drop-shadow(0 0 1px rgba(0,0,0,0.9)) drop-shadow(0 0 3px rgba(0,0,0,0.5)); }
+.cursor.is-on { opacity: 1; }
+.cursor__dot, .cursor__ring { position: absolute; left: 0; top: 0; will-change: transform; }
+.cursor__dot {
+  width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%;
+  background: var(--yellow); box-shadow: 0 0 10px rgba(255, 198, 26, 0.7);
+  transition: width 0.2s, height 0.2s, margin 0.2s;
+}
+.cursor__ring {
+  --size: 34px; --spread: 0;
+  width: var(--size); height: var(--size); margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+  border: 1px solid rgba(255, 198, 26, 0.45); border-radius: 50%;
+  transition: width 0.25s ease, height 0.25s ease, margin 0.25s ease, border-color 0.25s;
+}
+/* Four tick marks at 12, 3, 6 and 9 o'clock; they push outward with scroll speed. */
+.cursor__ring i {
+  position: absolute; left: 50%; top: 50%; width: 1.5px; height: 7px; margin: -3.5px 0 0 -0.75px;
+  background: var(--yellow);
+  transform: rotate(var(--a)) translateY(calc(var(--size) / -2 - 2px - var(--spread) * 14px));
+}
+.cursor__ring i:nth-child(1) { --a: 0deg; }
+.cursor__ring i:nth-child(2) { --a: 90deg; }
+.cursor__ring i:nth-child(3) { --a: 180deg; }
+.cursor__ring i:nth-child(4) { --a: 270deg; }
+.cursor.is-hover .cursor__ring { --size: 56px; border-color: rgba(255, 198, 26, 0.9); }
+.cursor.is-hover .cursor__dot { width: 0; height: 0; margin: 0; }
+.cursor.is-down .cursor__ring { --size: 26px; }

@@ -2,6 +2,7 @@ import { STAGES, EVENTS, NIGHT } from './config.js';
 import { FrameSequence } from './frames.js';
 import { Sound } from './audio.js';
 import { buildUI, tuneIn } from './ui.js';
+import { createCursor } from './cursor.js';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -80,6 +81,7 @@ document.getElementById('replay').addEventListener('click', () => {
 });
 
 // ---------- pointer (headlights + camera tilt) ----------
+const cursor = createCursor();
 const pointer = { x: innerWidth * 0.5, y: innerHeight * 0.55, nx: 0, ny: 0, last: -1e9 };
 const light = { x: pointer.x, y: pointer.y };
 addEventListener('pointermove', (e) => {
@@ -183,6 +185,8 @@ function tick(now) {
 
   const density = s.id === 'outro' ? 0.25 : s.id === 'hero' ? 0.6 : 1;
   dust?.update(dt, { speed, mouse: { x: pointer.nx, y: pointer.ny }, density });
+
+  cursor?.update(dt, speed);
 
   requestAnimationFrame(tick);
 }
