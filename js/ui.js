@@ -24,11 +24,7 @@ export function buildUI() {
   hero.innerHTML = `
     <p class="kicker">${esc(HERO.kicker)}</p>
     <h1 class="hero__title">${esc(HERO.title).replace('stand up.', '<em>stand up.</em>')}</h1>
-    <p class="hero__sub">${esc(HERO.sub)}</p>
-    <div class="hero__row">
-      <button class="hero__sound" id="heroSound" type="button">${esc(HERO.sound)}</button>
-      <span class="hero__hint">${esc(HERO.hint)}</span>
-    </div>`;
+    <span class="hero__hint">${esc(HERO.hint)}</span>`;
 
   const left = document.getElementById('panelLeft');
   const right = document.getElementById('panelRight');

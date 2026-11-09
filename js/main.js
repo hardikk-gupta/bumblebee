@@ -58,11 +58,8 @@ async function setSound(on) {
   if (on) await sound.enable(); else sound.disable();
   soundBtn.setAttribute('aria-pressed', String(on));
   soundBtn.querySelector('.sound__label').textContent = on ? 'Sound on' : 'Sound off';
-  const heroBtn = document.getElementById('heroSound');
-  if (heroBtn) heroBtn.textContent = on ? 'Sound is on' : 'Turn on sound';
 }
 soundBtn.addEventListener('click', () => setSound(!sound.on));
-document.getElementById('heroSound').addEventListener('click', () => setSound(!sound.on));
 
 // ---------- smooth scroll ----------
 let lenis = null;

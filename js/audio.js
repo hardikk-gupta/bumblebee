@@ -56,14 +56,15 @@ export class Sound {
   update(speed, car) {
     if (!this.ctx || !this.on) return;
     const t = this.ctx.currentTime;
+    const duck = t < (this.duckUntil || 0) ? 0.35 : 1;
     const f = 32 + speed * 120 * (0.4 + car * 0.6);
     this.oscs[0].frequency.setTargetAtTime(f, t, 0.08);
     this.oscs[1].frequency.setTargetAtTime(f, t, 0.08);
     this.oscs[2].frequency.setTargetAtTime(f, t, 0.08);
     this.engineFilter.frequency.setTargetAtTime(220 + speed * 2400 * (0.3 + car * 0.7), t, 0.1);
-    this.engineGain.gain.setTargetAtTime((0.05 + speed * 0.22) * (0.35 + car * 0.65), t, 0.1);
+    this.engineGain.gain.setTargetAtTime((0.05 + speed * 0.22) * (0.35 + car * 0.65) * duck, t, 0.1);
     this.windFilter.frequency.setTargetAtTime(500 + speed * 2500, t, 0.1);
-    this.windGain.gain.setTargetAtTime(speed * 0.2, t, 0.1);
+    this.windGain.gain.setTargetAtTime(speed * 0.2 * duck, t, 0.1);
   }
 
   noiseHit(when, { freq, q = 8, dur = 0.12, gain = 0.5, type = 'bandpass' }) {
@@ -118,11 +119,48 @@ export class Sound {
     this.tone(t + 0.05, { type: 'square', from: 140, to: 60, dur: 0.25, gain: 0.08, filter: 600 });
   }
 
-  // Short burst of static and a tuning chirp when a radio clip appears.
+  // Tuning into a station: a whistle sweeping across the band, crackly
+  // static through a narrow "AM speaker" filter, then a click as it locks.
+  // The engine and wind duck underneath so it is not masked.
   radio() {
-    if (!this.on) return;
-    const t = this.ctx.currentTime + 0.01;
-    this.noiseHit(t, { freq: 2200, q: 1.5, dur: 0.22, gain: 0.18 });
-    this.tone(t + 0.04, { type: 'sine', from: 1400 + Math.random() * 800, to: 700, dur: 0.12, gain: 0.04 });
+    if (!this.on || !this.ctx) return;
+    const ctx = this.ctx;
+    if (ctx.state !== 'running') ctx.resume();
+    const t = ctx.currentTime + 0.01;
+    const dur = 0.42;
+
+    // Small speaker: everything goes through a band-pass and a little drive.
+    const speaker = ctx.createBiquadFilter();
+    speaker.type = 'bandpass'; speaker.frequency.value = 1700; speaker.Q.value = 0.9;
+    const out = ctx.createGain(); out.gain.value = 1;
+    speaker.connect(out).connect(this.master);
+
+    // Static, chopped into crackles.
+    const src = ctx.createBufferSource(); src.buffer = this.noise;
+    const sg = ctx.createGain();
+    sg.gain.setValueAtTime(0.0001, t);
+    sg.gain.exponentialRampToValueAtTime(0.55, t + 0.015);
+    for (let k = 0; k < 9; k++) sg.gain.setValueAtTime(0.15 + Math.random() * 0.5, t + 0.03 + k * 0.035);
+    sg.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(sg).connect(speaker);
+    src.start(t, Math.random()); src.stop(t + dur + 0.05);
+
+    // Heterodyne whistle sliding down as the needle finds the station.
+    const o = ctx.createOscillator(); o.type = 'sine';
+    const from = 2600 + Math.random() * 1400;
+    o.frequency.setValueAtTime(from, t);
+    o.frequency.exponentialRampToValueAtTime(from * 0.18, t + dur * 0.8);
+    const og = ctx.createGain();
+    og.gain.setValueAtTime(0.0001, t);
+    og.gain.exponentialRampToValueAtTime(0.16, t + 0.03);
+    og.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.85);
+    o.connect(og).connect(speaker);
+    o.start(t); o.stop(t + dur);
+
+    // Lock-on click.
+    this.tone(t + dur * 0.8, { type: 'square', from: 1200, to: 900, dur: 0.04, gain: 0.08, filter: 3000 });
+
+    // update() ducks the engine and wind until then.
+    this.duckUntil = t + dur + 0.1;
   }
 }

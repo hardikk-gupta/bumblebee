@@ -28,10 +28,8 @@ export const EVENTS = [
 export const NIGHT = { full: 0.04, gone: 0.26, depth: 0.72 };
 
 export const HERO = {
-  kicker: 'Field test B-127 · Desert highway · Unofficial fan tribute',
-  title: 'By every known law of engineering, a car should not be able to stand up.',
-  sub: 'This one never read the rules. Scroll to start the engine, and move your cursor to aim the headlights.',
-  sound: 'Turn on sound',
+  kicker: 'By every known law of engineering',
+  title: 'A car should not stand up.',
   hint: 'Scroll to drive',
 };
 
@@ -107,7 +105,7 @@ export const INTRO = {
   ready: 'Ready',
   withSound: 'Start with sound',
   silent: 'Start without sound',
-  note: 'Best with headphones. Sound is made live in your browser.',
+  note: 'Best with headphones. Move your cursor to aim the headlights.',
 };
 
 export const RADIO_NOTE = 'Voice box offline · Speaking through the radio';
