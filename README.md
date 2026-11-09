@@ -18,25 +18,28 @@ Then open http://localhost:8127.
 
 | Feature | Where |
 |---|---|
+| Start screen: waits for the first pass of frames, and the click unlocks audio | `js/main.js`, `js/ui.js` |
 | Scroll-scrubbed frames, crossfaded between neighbours | `js/frames.js` |
 | Scroll speed drives a zoom blur, camera shake and the speedometer | `js/main.js`, `js/frames.js` |
 | Night opening with headlights aimed by the cursor (auto-sweep on touch/idle) | `js/frames.js` `drawNight` |
 | Three.js dust layer: speed pushes it at the camera, mouse tilts it, transform bursts it | `js/dust.js` |
-| Synthesised sound: engine follows scroll speed, transformation SFX, radio static | `js/audio.js` |
+| Synthesised sound: engine follows scroll speed, metal clanks when the car splits, a thud when the robot lands, radio static | `js/audio.js` |
 | Radio voice: right panel tunes into cut-up radio clips | `js/ui.js` `tuneIn` |
 | All copy, stage timing and frame numbers | `js/config.js` |
 
 Respects `prefers-reduced-motion` (no blur, shake, dust or smooth scroll).
 
-## Swapping in new video
+## Frames
 
-1. Build frames from one or more clips (joined in order):
+The current frames come from one 24-second AI-generated clip, split into three segments so the conversion keeps every frame while the drive and robot shots stay light:
 
-   ```bash
-   scripts/build-frames.sh --delogo 1130:570:62:60 clip1.mp4 clip2.mp4 clip3.mp4
-   ```
+```bash
+scripts/build-frames.sh --delogo 1130:570:62:60 \
+  "clip.mp4::0:9:12" "clip.mp4::9:12:24" "clip.mp4::12:24.05:12"
+```
 
-   `--delogo x:y:w:h` blurs out a watermark box in source pixels; drop it if the clips are clean. Output goes to `frames/desktop`, `frames/mobile` and `frames/manifest.json`.
-2. In `js/config.js`, update the frame ranges in `STAGES`, `TRANSFORM_FRAME`, and any copy that quotes frame counts or clip length.
+Each segment is `path[::start[:end[:fps]]]`, joined in order (they can be different files). `--delogo x:y:w:h` blurs out a watermark box in source pixels. Output: `frames/desktop` (1280 wide here, up to 1920 from 1080p sources), `frames/mobile` (720 wide), and `frames/manifest.json` with each segment's start frame.
+
+After rebuilding, update `STAGES` and `EVENTS` in `js/config.js` from the manifest, plus any copy that quotes frame counts or clip length.
 
 Libraries are vendored in `vendor/` (three.js 0.160.0, Lenis 1.1.13, both MIT).

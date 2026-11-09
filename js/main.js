@@ -1,4 +1,4 @@
-import { STAGES, TRANSFORM_FRAME, NIGHT } from './config.js';
+import { STAGES, EVENTS, NIGHT } from './config.js';
 import { FrameSequence } from './frames.js';
 import { Sound } from './audio.js';
 import { buildUI, tuneIn } from './ui.js';
@@ -8,7 +8,10 @@ const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
 
+history.scrollRestoration = 'manual';
+scrollTo(0, 0);
 buildUI();
+document.documentElement.classList.add('is-locked');
 
 const track = document.getElementById('track');
 const frameCanvas = document.getElementById('frame');
@@ -25,8 +28,20 @@ const stepEls = [...document.querySelectorAll('#steps li')];
 const manifest = await fetch('frames/manifest.json').then((r) => r.json());
 const mobile = Math.min(innerWidth, innerHeight * 1.78) <= 760;
 const seq = new FrameSequence(frameCanvas, { dir: mobile ? 'frames/mobile' : 'frames/desktop', count: manifest.count });
+// The start screen unlocks once every 8th frame is in (enough to scrub);
+// the rest keep streaming in behind it.
+const intro = document.getElementById('intro');
+const introBar = document.getElementById('introBar');
+const introStatus = document.getElementById('introStatus');
+const coarse = Math.ceil(manifest.count / 8);
 seq.load((p) => {
   loaderNum.textContent = Math.round(p * 100);
+  introBar.style.transform = `scaleX(${Math.min(1, seq.loadedCount / coarse)})`;
+  if (seq.loadedCount >= coarse && !intro.classList.contains('is-ready')) {
+    intro.classList.add('is-ready');
+    introStatus.textContent = introStatus.dataset.ready;
+    intro.querySelectorAll('button').forEach((b) => (b.disabled = false));
+  }
   if (p >= 1) loader.classList.add('is-done');
 });
 
@@ -52,6 +67,17 @@ document.getElementById('heroSound').addEventListener('click', () => setSound(!s
 // ---------- smooth scroll ----------
 let lenis = null;
 if (!reduced && window.Lenis) lenis = new window.Lenis({ lerp: 0.085, wheelMultiplier: 0.9, touchMultiplier: 1.4 });
+lenis?.stop();
+async function start(withSound) {
+  if (withSound) await setSound(true);
+  intro.classList.add('is-gone');
+  document.documentElement.classList.remove('is-locked');
+  lenis?.start();
+  setTimeout(() => intro.remove(), 900);
+}
+document.getElementById('introSound').addEventListener('click', () => start(true));
+document.getElementById('introSilent').addEventListener('click', () => start(false));
+
 document.getElementById('replay').addEventListener('click', () => {
   if (lenis) lenis.scrollTo(0, { duration: 2.4 }); else scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
 });
@@ -95,11 +121,17 @@ function setStage(id) {
   }
 }
 
-function onTransform() {
-  flash.classList.remove('is-on'); void flash.offsetWidth; flash.classList.add('is-on');
-  sound.transform();
-  dust?.burst();
-  if (!reduced) shakeAmt = 1;
+function fire(type) {
+  if (type === 'split') {
+    flash.classList.remove('is-on'); void flash.offsetWidth; flash.classList.add('is-on');
+    sound.split();
+    dust?.burst(1);
+    if (!reduced) shakeAmt = Math.max(shakeAmt, 0.7);
+  } else if (type === 'land') {
+    sound.land();
+    dust?.burst(0.6);
+    if (!reduced) shakeAmt = 1.2;
+  }
 }
 
 addEventListener('resize', () => { seq.resize(); dust?.resize(); });
@@ -119,7 +151,7 @@ function tick(now) {
   speed = lerp(speed, raw, raw > speed ? 0.25 : 0.06);
 
   const f = frameAt(p);
-  if (lastFrame < TRANSFORM_FRAME && f >= TRANSFORM_FRAME) onTransform();
+  for (const e of EVENTS) if (lastFrame < e.frame && f >= e.frame) fire(e.type);
   lastFrame = f;
 
   // Step indicator fill.
@@ -149,7 +181,7 @@ function tick(now) {
   speedoNum.textContent = String(kmh).padStart(3, '0');
   speedoFill.style.strokeDashoffset = String(157.08 * (1 - kmh / 260));
 
-  const car = s.id === 'hero' || s.id === 'drive' ? 1 : s.id === 'transform' ? 1 - clamp((f - TRANSFORM_FRAME) / 10) : 0;
+  const car = s.id === 'hero' || s.id === 'drive' ? 1 : s.id === 'transform' ? 1 - clamp((f - EVENTS[0].frame) / 20) : 0;
   sound.update(speed, car);
 
   const density = s.id === 'outro' ? 0.25 : s.id === 'hero' ? 0.6 : 1;

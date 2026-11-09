@@ -87,7 +87,7 @@ export class Dust {
     this.camera.aspect = c.clientWidth / Math.max(1, c.clientHeight);
     this.camera.updateProjectionMatrix();
   }
-  burst() { this.fine.burst(14); this.motes.burst(6); }
+  burst(k = 1) { this.fine.burst(14 * k); this.motes.burst(6 * k); }
   /** speed 0..1, mouse -1..1, density 0..1 (overall visibility by stage) */
   update(dt, { speed, mouse, density }) {
     this.time += dt;

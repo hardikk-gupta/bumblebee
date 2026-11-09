@@ -94,8 +94,8 @@ export class Sound {
     o.start(when); o.stop(when + dur + 0.05);
   }
 
-  // The transformation: a whoosh, servo whines, a run of metal clanks, a heavy landing.
-  transform() {
+  // The car breaks open: a whoosh, servo whines, a run of metal clanks.
+  split() {
     if (!this.on) return;
     const t = this.ctx.currentTime + 0.02;
     const whoosh = this.noiseHit(t, { freq: 400, q: 1.2, dur: 1.1, gain: 0.35 });
@@ -107,8 +107,15 @@ export class Sound {
       this.noiseHit(when, { freq: 1800 + Math.random() * 4200, q: 18 + Math.random() * 20, dur: 0.09 + Math.random() * 0.12, gain: 0.5 });
       this.tone(when, { type: 'triangle', from: 900 + Math.random() * 1500, to: 600, dur: 0.12, gain: 0.05 });
     }
-    this.tone(t + 1.0, { type: 'sine', from: 90, to: 28, dur: 0.7, gain: 0.9 });
-    this.noiseHit(t + 1.0, { freq: 180, q: 0.8, dur: 0.5, gain: 0.6, type: 'lowpass' });
+  }
+
+  // The robot reaches full height: one heavy landing.
+  land() {
+    if (!this.on) return;
+    const t = this.ctx.currentTime + 0.02;
+    this.tone(t, { type: 'sine', from: 90, to: 28, dur: 0.8, gain: 0.95 });
+    this.noiseHit(t, { freq: 180, q: 0.8, dur: 0.55, gain: 0.6, type: 'lowpass' });
+    this.tone(t + 0.05, { type: 'square', from: 140, to: 60, dur: 0.25, gain: 0.08, filter: 600 });
   }
 
   // Short burst of static and a tuning chirp when a radio clip appears.

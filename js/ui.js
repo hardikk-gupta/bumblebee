@@ -1,12 +1,25 @@
 // Builds the hero, side panels, outro and step indicator from config.js,
 // and runs the radio "tuning" effect when a stage becomes active.
-import { HERO, PANELS, OUTRO, RADIO_NOTE } from './config.js';
+import { HERO, PANELS, OUTRO, RADIO_NOTE, INTRO } from './config.js';
 
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const GLYPHS = '#%&*+=?@ABCDEFGHJKLMNPRSTUVWXYZ0123456789/<>';
 const DIAL = [88, 108]; // FM band shown on the dial
 
 export function buildUI() {
+  document.getElementById('intro').innerHTML = `
+    <div class="intro__inner">
+      <p class="kicker">${esc(INTRO.kicker)}</p>
+      <div class="intro__mark" aria-hidden="true"><span></span><span></span><span></span></div>
+      <p class="intro__status" id="introStatus" data-ready="${esc(INTRO.ready)}">${esc(INTRO.loading)}</p>
+      <div class="intro__bar"><i id="introBar"></i></div>
+      <div class="intro__row">
+        <button class="hero__sound" id="introSound" type="button" disabled>${esc(INTRO.withSound)}</button>
+        <button class="intro__silent" id="introSilent" type="button" disabled>${esc(INTRO.silent)}</button>
+      </div>
+      <p class="intro__note">${esc(INTRO.note)}</p>
+    </div>`;
+
   const hero = document.getElementById('hero');
   hero.innerHTML = `
     <p class="kicker">${esc(HERO.kicker)}</p>
